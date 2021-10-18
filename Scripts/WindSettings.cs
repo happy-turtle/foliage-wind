@@ -4,7 +4,6 @@ using UnityEngine;
 public class WindSettings
 {
     [Header("Global")]
-    [SerializeField]
     [Range(0f, 1f)] public float windGlobalStrengthScale = 0.5f;
     [Range(0f, 3f)] public float windGlobalStrengthScale2 = 1f;
     [Range(0f, 360f)] public float windDirection = 65f;

@@ -1,13 +1,15 @@
-﻿#if UNITY_HDRP
 using UnityEngine;
-using UnityEngine.Rendering.HighDefinition;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
-class WindControlPass : CustomPass
+public class WindControlPass : ScriptableRenderPass
 {
-    [Header("Wind Settings")]
-    [SerializeField]
     WindSettings ws;
+
+    public WindControlPass(WindSettings _windSettings)
+    {
+        ws = _windSettings;
+    }
 
     protected float WindDirectionAngle
     {
@@ -36,23 +38,17 @@ class WindControlPass : CustomPass
 
     protected float RealTime { get { return Application.isPlaying ? Time.time : Time.realtimeSinceStartup; } }
 
-    // It can be used to configure render targets and their clear state. Also to create temporary render target textures.
-    // When empty this render pass will render to the active camera render target.
-    // You should never call CommandBuffer.SetRenderTarget. Instead call <c>ConfigureTarget</c> and <c>ConfigureClear</c>.
-    // The render pipeline will ensure target setup and clearing happens in an performance manner.
-    protected override void Setup(ScriptableRenderContext renderContext, CommandBuffer cmd)
-    {
-        // Setup code here
-    }
 
-    protected override void Execute(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullingResult)
+    public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
     {
         SetShaderUniforms(cmd);
     }
 
-    protected override void Cleanup()
+    public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
     {
-        // Cleanup code
+        CommandBuffer cmd = CommandBufferPool.Get("GlobalWindParams");
+        context.ExecuteCommandBuffer(cmd);
+        CommandBufferPool.Release(cmd);
     }
 
     protected virtual void SetShaderUniforms(CommandBuffer cb)
@@ -65,21 +61,52 @@ class WindControlPass : CustomPass
         var _WindData_0 = new Matrix4x4(_WindData_0_0, _WindData_0_1, Vector4.zero, Vector4.zero);
         cb.SetGlobalMatrix("_WindData_0", _WindData_0.transpose);
 
-        var _WindData_1_0 = new Vector4(ws.windBaseStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2, ws.windBaseStrengthOffset, ws.windBaseStrengthPhase, ws.windBaseStrengthPhase2);
-        var _WindData_1_1 = new Vector4(ws.windBaseStrengthVariancePeriod, ws.windGustStrength * gustStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2, ws.windGustStrengthOffset, ws.windGustStrengthPhase);
-        var _WindData_1_2 = new Vector4(ws.windGustStrengthPhase2, ws.windGustStrengthVariancePeriod, ws.windGustInnerCosScale, ws.windFlutterStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2);
-        var _WindData_1_3 = new Vector4(ws.windFlutterGustStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2, ws.windFlutterGustStrengthOffset, ws.windFlutterGustStrengthScale, ws.windFlutterGustVariancePeriod);
+        var _WindData_1_0 = new Vector4(
+            ws.windBaseStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2,
+            ws.windBaseStrengthOffset,
+            ws.windBaseStrengthPhase,
+            ws.windBaseStrengthPhase2);
+        var _WindData_1_1 = new Vector4(
+            ws.windBaseStrengthVariancePeriod,
+            ws.windGustStrength * gustStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2,
+            ws.windGustStrengthOffset,
+            ws.windGustStrengthPhase);
+        var _WindData_1_2 = new Vector4(
+            ws.windGustStrengthPhase2,
+            ws.windGustStrengthVariancePeriod,
+            ws.windGustInnerCosScale,
+            ws.windFlutterStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2);
+        var _WindData_1_3 = new Vector4(
+            ws.windFlutterGustStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2,
+            ws.windFlutterGustStrengthOffset,
+            ws.windFlutterGustStrengthScale,
+            ws.windFlutterGustVariancePeriod);
 
         var _WindData_1 = new Matrix4x4(_WindData_1_0, _WindData_1_1, _WindData_1_2, _WindData_1_3);
         cb.SetGlobalMatrix("_WindData_1", _WindData_1.transpose);
 
-        var _WindData_2_0 = new Vector4(ws.windTreeBaseStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2, ws.windTreeBaseStrengthOffset, ws.windTreeBaseStrengthPhase, ws.windTreeBaseStrengthPhase2);
-        var _WindData_2_1 = new Vector4(ws.windTreeBaseStrengthVariancePeriod, ws.windTreeGustStrength * treeGustStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2, ws.windTreeGustStrengthOffset, ws.windTreeGustStrengthPhase);
-        var _WindData_2_2 = new Vector4(ws.windTreeGustStrengthPhase2, ws.windTreeGustStrengthVariancePeriod, ws.windTreeGustInnerCosScale, ws.windTreeFlutterStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2);
-        var _WindData_2_3 = new Vector4(ws.windTreeFlutterGustStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2, ws.windTreeFlutterGustStrengthOffset, ws.windTreeFlutterGustStrengthScale, ws.windTreeFlutterGustVariancePeriod);
+        var _WindData_2_0 = new Vector4(
+            ws.windTreeBaseStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2,
+            ws.windTreeBaseStrengthOffset,
+            ws.windTreeBaseStrengthPhase,
+            ws.windTreeBaseStrengthPhase2);
+        var _WindData_2_1 = new Vector4(
+            ws.windTreeBaseStrengthVariancePeriod,
+            ws.windTreeGustStrength * treeGustStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2,
+            ws.windTreeGustStrengthOffset,
+            ws.windTreeGustStrengthPhase);
+        var _WindData_2_2 = new Vector4(
+            ws.windTreeGustStrengthPhase2,
+            ws.windTreeGustStrengthVariancePeriod,
+            ws.windTreeGustInnerCosScale,
+            ws.windTreeFlutterStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2);
+        var _WindData_2_3 = new Vector4(
+            ws.windTreeFlutterGustStrength * ws.windGlobalStrengthScale * ws.windGlobalStrengthScale2,
+            ws.windTreeFlutterGustStrengthOffset,
+            ws.windTreeFlutterGustStrengthScale,
+            ws.windTreeFlutterGustVariancePeriod);
 
         var _WindData_2 = new Matrix4x4(_WindData_2_0, _WindData_2_1, _WindData_2_2, _WindData_2_3);
         cb.SetGlobalMatrix("_WindData_2", _WindData_2.transpose);
     }
 }
-#endif
